@@ -1,6 +1,6 @@
 # Othello-C
 
-This mini-project implements the game of othello using the C programming language. I started this project as tribute to one of my favorite childhood board games, and as a way to familiarize myself with the C programming language.
+This mini-project implements the game of othello using the C++ programming language. I started this project as tribute to one of my favorite childhood board games, and as a way to familiarize myself with the C++ programming language.
 
 I am doing this in tandem with my parallel computing module at the National University of Singapore, and have hopes to utilize the knowledge learnt in that module and apply it to this project.
 
