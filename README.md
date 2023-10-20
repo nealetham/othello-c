@@ -21,5 +21,7 @@ Have fun!
 
 - [x] Basic functionality
 - [x] Refactor code
+- [x] Add naive AI player
+- [ ] Handle exceptions
 - [ ] Enhance UI with ncurses
 - [ ] Parallelize with OMP
