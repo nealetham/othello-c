@@ -9,42 +9,39 @@
 
 #define ROWS 8
 #define COLUMNS 8
-#define BLACK 0
-#define WHITE 1
-#define EMPTY 2
-#define PLAYABLE 3
-
-#define BLACK_DISC 'O'
-#define WHITE_DISC 'X'
+#define DIRECTIONS 8
+#define BLACK_DISK 'O'
+#define WHITE_DISK 'X'
 #define EMPTY_CELL ' '
 #define PLAYABLE_CELL '*'
 
-int board[ROWS][COLUMNS];
-int playable_direction[ROWS][COLUMNS][8];
-int scores[2];
-std::vector<std::array<int, 2>> player_moves;
-int current_player;
+enum CELL_STATUS
+{
+  BLACK = 0,
+  WHITE = 1,
+  EMPTY = 2,
+  PLAYABLE = 3
+};
 
-void init_board()
+int board[ROWS][COLUMNS];
+int scores[2];
+int current_player;
+int move_direction[ROWS][COLUMNS][DIRECTIONS];
+int playable_directions[8][2] = {
+    {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+
+std::vector<std::array<int, 2>> player_moves;
+
+void setup()
 {
   memset(board, EMPTY, sizeof(board));
-  for (int row = 0; row < ROWS; row++)
-  {
-    for (int col = 0; col < COLUMNS; col++)
-    {
-      board[row][col] = EMPTY;
-    }
-  }
-  board[3][3] = BLACK;
-  board[4][4] = BLACK;
-  board[3][4] = WHITE;
-  board[4][3] = WHITE;
-  scores[BLACK] = 2;
-  scores[WHITE] = 2;
+  board[3][3] = board[4][4] = BLACK;
+  board[3][4] = board[4][3] = WHITE;
+  scores[BLACK] = scores[WHITE] = 2;
   current_player = BLACK;
 }
 
-void place_disc(int row, int col)
+void execute_move(int row, int col)
 {
   int opponent = 1 - current_player;
   board[row][col] = current_player;
@@ -52,107 +49,24 @@ void place_disc(int row, int col)
 
   for (int cell = 0; cell < 8; cell++)
   {
-    int action = playable_direction[row][col][cell];
+    int action = move_direction[row][col][cell];
     if (!action)
     {
       continue; // not valid in any direction
     }
-    int row_ul, col_ul, row_up, row_ur, col_ur, col_left, col_right, row_ll, col_ll, row_down, row_lr, col_lr;
-    switch (cell)
+
+    int row_dir = playable_directions[cell][0];
+    int col_dir = playable_directions[cell][1];
+
+    int row_temp = row + row_dir;
+    int col_temp = col + col_dir;
+
+    while (board[row_temp][col_temp] == opponent)
     {
-    case 0: // Upper Left Diagonal
-      row_ul = row - 1;
-      col_ul = col - 1;
-      while (board[row_ul][col_ul] == opponent)
-      {
-        board[row_ul][col_ul] = current_player;
-        score_gain += 1;
-        row_ul -= 1;
-        col_ul -= 1;
-      }
-      break;
-
-    case 1: // Top
-      printf("[%d, %d] Top\n", row, col);
-      row_up = row - 1;
-      while (board[row_up][col] == opponent)
-      {
-        board[row_up][col] = current_player;
-        score_gain += 1;
-        row_up -= 1;
-      }
-      break;
-
-    case 2: // Upper Right Diagonal
-      printf("[%d, %d] URD\n", row, col);
-      row_ur = row - 1;
-      col_ur = col + 1;
-      while (board[row_ur][col_ur] == opponent)
-      {
-        board[row_ur][col_ur] = current_player;
-        score_gain += 1;
-        row_ur -= 1;
-        col_ur += 1;
-      }
-      break;
-
-    case 3: // Left
-      printf("[%d, %d] Left\n", row, col);
-      col_left = col - 1;
-      while (board[row][col_left] == opponent)
-      {
-        board[row][col_left] = current_player;
-        score_gain += 1;
-        col_left -= 1;
-      }
-      break;
-
-    case 4: // Right
-      printf("[%d, %d] Right\n", row, col);
-      col_right = col + 1;
-      while (board[row][col_right] == opponent)
-      {
-        board[row][col_right] = current_player;
-        score_gain += 1;
-        col_right += 1;
-      }
-      break;
-
-    case 5: // Lower Left Diagonal
-      printf("[%d, %d] LLD\n", row, col);
-      row_ll = row + 1;
-      col_ll = col - 1;
-      while (board[row_ll][col_ll] == opponent)
-      {
-        board[row_ll][col_ll] = current_player;
-        score_gain += 1;
-        row_ll += 1;
-        col_ll -= 1;
-      }
-      break;
-
-    case 6: // Down
-      printf("[%d, %d] Down\n", row, col);
-      row_down = row + 1;
-      while (board[row_down][col] == opponent)
-      {
-        board[row_down][col] = current_player;
-        score_gain += 1;
-        row_down += 1;
-      }
-      break;
-
-    case 7: // Lower Right Diagonal
-      printf("[%d, %d] LRD\n", row, col);
-      row_lr = row + 1;
-      col_lr = col + 1;
-      while (board[row_lr][col_lr] == opponent)
-      {
-        board[row_lr][col_lr] = current_player;
-        score_gain += 1;
-        row_lr += 1;
-        col_lr += 1;
-      }
+      board[row_temp][col_temp] = current_player;
+      score_gain += 1;
+      row_temp += row_dir;
+      col_temp += col_dir;
     }
   }
   scores[current_player] += score_gain;
@@ -161,11 +75,7 @@ void place_disc(int row, int col)
 
 bool is_valid_position(int row, int col)
 {
-  if (row < 0 || row >= 8 || col < 0 || col >= 8)
-  {
-    return false;
-  }
-  return true;
+  return !(row < 0 || row >= 8 || col < 0 || col >= 8);
 }
 
 int distance(int src_row, int src_col, int dst_row, int dst_col)
@@ -175,7 +85,7 @@ int distance(int src_row, int src_col, int dst_row, int dst_col)
   return std::max(d_row, d_col);
 }
 
-bool in_move_set(int row, int col)
+bool in_player_moves(int row, int col)
 {
   std::array<int, 2> move{row, col};
   auto iter = std::find(player_moves.begin(), player_moves.end(), move);
@@ -184,117 +94,38 @@ bool in_move_set(int row, int col)
     player_moves.erase(iter);
     return true;
   }
-
   return false;
 }
 
-int is_playable(int row, int col, int opponent)
+int is_possible_move(int row, int col, int opponent)
 {
-  memset(playable_direction[row][col], 0, 1);
+  if (board[row][col] == opponent || board[row][col] == current_player)
+  {
+    return false;
+  }
+
+  memset(move_direction[row][col], 0, 1);
   bool playable = false;
 
-  // Upper Left Diagonal
-  int row_ul = row - 1;
-  int col_ul = col - 1;
-  while (is_valid_position(row_ul, col_ul) && board[row_ul][col_ul] == opponent)
+  for (int dir = 0; dir < DIRECTIONS; dir++)
   {
-    row_ul -= 1;
-    col_ul -= 1;
-  }
-  if (is_valid_position(row_ul, col_ul) && board[row_ul][col_ul] == current_player && distance(row, col, row_ul, col_ul) > 1)
-  {
-    playable_direction[row][col][0] = 1;
-    playable = true;
-  }
+    int row_dir = playable_directions[dir][0];
+    int col_dir = playable_directions[dir][1];
 
-  // Top
-  int row_up = row - 1;
-  while (is_valid_position(row_up, col) && board[row_up][col] == opponent)
-  {
-    row_up -= 1;
-  }
-  if (is_valid_position(row_up, col) && board[row_up][col] == current_player && distance(row, col, row_up, col) > 1)
-  {
-    playable_direction[row][col][1] = 1;
-    playable = true;
-  }
+    int row_temp = row + row_dir;
+    int col_temp = col + col_dir;
 
-  // Upper Right Diagonal
-  int row_ur = row - 1;
-  int col_ur = col + 1;
-  while (is_valid_position(row_ur, col_ur) && board[row_ur][col_ur] == opponent)
-  {
-    row_ur -= 1;
-    col_ur += 1;
-  }
-  if (is_valid_position(row_ur, col_ur) && board[row_ur][col_ur] == current_player && distance(row, col, row_ur, col_ur) > 1)
-  {
-    playable_direction[row][col][2] = 1;
-    playable = true;
-  }
+    while (is_valid_position(row_temp, col_temp) && board[row_temp][col_temp] == opponent)
+    {
+      row_temp += row_dir;
+      col_temp += col_dir;
+    }
 
-  // Left
-  int col_left = col - 1;
-  while (is_valid_position(row, col_left) && board[row][col_left] == opponent)
-  {
-    col_left -= 1;
-  }
-  if (is_valid_position(row, col_left) && board[row][col_left] == current_player && distance(row, col, row, col_left) > 1)
-  {
-    playable_direction[row][col][3] = 1;
-    playable = true;
-  }
-
-  // Right
-  int col_right = col + 1;
-  while (is_valid_position(row, col_right) && board[row][col_right] == opponent)
-  {
-    col_right += 1;
-  }
-  if (is_valid_position(row, col_right) && board[row][col_right] == current_player && distance(row, col, row, col_right) > 1)
-  {
-    playable_direction[row][col][4] = 1;
-    playable = true;
-  }
-
-  // Lower Left Diagonal
-  int row_ll = row + 1;
-  int col_ll = col - 1;
-  while (is_valid_position(row_ll, col_ll) && board[row_ll][col_ll] == opponent)
-  {
-    row_ll += 1;
-    col_ll -= 1;
-  }
-  if (is_valid_position(row_ll, col_ll) && board[row_ll][col_ll] == current_player && distance(row, col, row_ll, col_ll) > 1)
-  {
-    playable_direction[row][col][5] = 1;
-    playable = true;
-  }
-
-  // Down
-  int row_down = row + 1;
-  while (is_valid_position(row_down, col) && board[row_down][col] == opponent)
-  {
-    row_down += 1;
-  }
-  if (is_valid_position(row_down, col) && board[row_down][col] == current_player && distance(row, col, row_down, col) > 1)
-  {
-    playable_direction[row][col][6] = 1;
-    playable = true;
-  }
-
-  // Lower Right Diagonal
-  int row_lr = row + 1;
-  int col_lr = col + 1;
-  while (is_valid_position(row_lr, col_lr) && board[row_lr][col_lr] == opponent)
-  {
-    row_lr += 1;
-    col_lr += 1;
-  }
-  if (is_valid_position(row_lr, col_lr) && board[row_lr][col_lr] == current_player && distance(row, col, row_lr, col_lr) > 1)
-  {
-    playable_direction[row][col][7] = 1;
-    playable = true;
+    if (is_valid_position(row_temp, col_temp) && board[row_temp][col_temp] == current_player && distance(row, col, row_temp, col_temp) > 1)
+    {
+      move_direction[row][col][dir] = 1;
+      playable = true;
+    }
   }
 
   return playable;
@@ -308,41 +139,31 @@ void get_possible_moves()
   {
     for (int col = 0; col < COLUMNS; col++)
     {
-      if (board[row][col] == opponent || board[row][col] == current_player)
-      {
-        continue; // another disc on this position
-      }
-
-      bool playable = is_playable(row, col, opponent);
+      bool playable = is_possible_move(row, col, opponent);
       if (!playable)
       {
         continue;
       }
-
       possible_moves.push_back(std::array<int, 2>{row, col});
     }
   }
   player_moves = possible_moves;
 }
 
-void make_move()
+void prompt_move()
 {
-  int row;
-  int col;
+  int row, col;
 
-  while (true)
+  while (1)
   {
-    printf("Enter row [0-7] and column [0-7] separated by a single space (e.g. 2 0).\n");
+    std::cout << "Enter the row and column (e.g. 2 0)\n";
     std::cin >> row >> col;
-
-    if (in_move_set(row, col))
+    if (in_player_moves(row, col))
     {
-      place_disc(row, col);
+      execute_move(row, col);
       break;
     }
-
-    printf("Move was not valid. Please try again!\n\n");
-    continue;
+    std::cout << "You can't make that move. Please try again!\n\n";
   }
 }
 
@@ -357,39 +178,40 @@ void display_board()
     marked_board[elem[0]][elem[1]] = PLAYABLE;
   }
 
-  printf("\n#############################\n");
-  printf("####    PLAYER %d TURN    ####\n", current_player);
-  printf("#############################\n");
-  printf("P0: %d    P1: %d\n\n", scores[0], scores[1]);
-  printf("    0  1  2  3  4  5  6  7\n");
-  printf("   _________________________\n");
+  std::cout << "\n#############################\n";
+  std::cout << "          PLAYER " << current_player;
+  std::cout << "\n#############################\n\n";
+  std::cout << "Player O: " << scores[0];
+  std::cout << "     ";
+  std::cout << "Player X: " << scores[1] << "\n\n";
+  std::cout << "    0  1  2  3  4  5  6  7\n";
+  std::cout << "   _________________________\n";
 
   for (int row = 0; row < ROWS; row++)
   {
-    printf("%d |", row);
+    std::cout << row << " |";
     for (int col = 0; col < COLUMNS; col++)
     {
-      int cell = marked_board[row][col];
+      int cell_status = marked_board[row][col];
 
-      switch (cell)
+      switch (cell_status)
       {
-      case WHITE:
-        printf(" %c ", WHITE_DISC);
+      case CELL_STATUS::WHITE:
+        std::cout << " " << WHITE_DISK << " ";
         continue;
-      case BLACK:
-        printf(" %c ", BLACK_DISC);
+      case CELL_STATUS::BLACK:
+        std::cout << " " << BLACK_DISK << " ";
         continue;
-      case EMPTY:
-        printf(" %c ", EMPTY_CELL);
+      case CELL_STATUS::PLAYABLE:
+        std::cout << " " << PLAYABLE_CELL << " ";
         continue;
       default:
-        printf(" %c ", PLAYABLE_CELL);
+        std::cout << " " << EMPTY_CELL << " ";
       }
     }
-    printf("|\n");
+    std::cout << "|\n";
   }
-  printf("  |________________________|\n");
-  printf("\n");
+  std::cout << "  |________________________|\n\n";
 }
 
 void next_player()
@@ -399,25 +221,34 @@ void next_player()
 
 void display_winner()
 {
-  printf("\n#############################\n");
-  printf("Final score:\n%c: %d %c: %d\n", BLACK_DISC, scores[BLACK], WHITE_DISC, scores[WHITE]);
+  std::cout << "\n#############################\n";
+  std::cout << "         Final Score ";
+  std::cout << "\n#############################\n";
+  std::cout << "Player " << BLACK_DISK << ": " << scores[BLACK];
+  std::cout << "     ";
+  std::cout << "Player " << WHITE_DISK << ": " << scores[WHITE] << "\n";
+
   if (scores[WHITE] > scores[BLACK])
-    printf("%c wins.\n", WHITE_DISC);
+  {
+    std::cout << "Player " << WHITE_DISK << " wins!";
+  }
   else if (scores[WHITE] < scores[BLACK])
-    printf("%c wins.\n", BLACK_DISC);
+  {
+    std::cout << "Player " << BLACK_DISK << " wins!";
+  }
   else
-    printf("Draw game.\n");
-  printf("\n#############################\n");
+    std::cout << "\nGame was drawn!\n";
 }
 
 int main()
 {
-  init_board();
+  setup();
   int game_end = 0;
   int consecutive_skips = 0;
 
   while (!game_end)
   {
+    std::cout << "\033c";
     get_possible_moves();
     if (!player_moves.size())
     {
@@ -430,7 +261,7 @@ int main()
       continue;
     }
     display_board();
-    make_move();
+    prompt_move();
     consecutive_skips = 0;
     next_player();
   }
