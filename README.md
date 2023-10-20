@@ -11,11 +11,15 @@ Run `./othello` to start the game!
 
 ## Game Tutorial
 
-Currently, the game only supports two player games. All valid plays that can be made by the current player are denoted by an asterisk (\*) mark. To input the position of the next play, the player should type the row number and column number, separated by a white space. For example, `2 4` indicates a play at row 2 and column 4.
+Upon starting the game, you are prompted to choose to play against a machine AI, or a local player. All valid plays that can be made by the current player are denoted by an asterisk (\*) mark. To input the position of the next play, the player should type the row number and column number, separated by a white space. For example, `2 4` indicates a play at row 2 and column 4.
 
 The game ends when there are no moves left for both players, or when the board is completely filled.
 
 Have fun!
+
+## Machine AI
+
+The current iteration of the AI is just a naive implementation which takes the move that returns the highest utility for itself. Future renditions may decide to use classic adversarial algorithms such as the mini-max algorithm.
 
 ## Roadmap
 
