@@ -20,6 +20,6 @@ Have fun!
 ## Roadmap
 
 - [x] Basic functionality
-- [ ] Refactor code
-- [ ] Enhance UI
+- [x] Refactor code
+- [ ] Enhance UI with ncurses
 - [ ] Parallelize with OMP
