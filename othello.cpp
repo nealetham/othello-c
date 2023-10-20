@@ -3,9 +3,8 @@
 #include <string.h>
 #include <cstring>
 #include <algorithm>
-#include <vector>
-#include <array>
 #include <iostream>
+#include "othello-naive-ai.h"
 
 #define ROWS 8
 #define COLUMNS 8
@@ -27,10 +26,10 @@ int board[ROWS][COLUMNS];
 int scores[2];
 int current_player;
 int move_direction[ROWS][COLUMNS][DIRECTIONS];
-int playable_directions[8][2] = {
-    {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+bool game_style;
 
 std::vector<std::array<int, 2>> player_moves;
+std::array<int, 2> previous_move = {-1, -1};
 
 void setup()
 {
@@ -47,16 +46,16 @@ void execute_move(int row, int col)
   board[row][col] = current_player;
   int score_gain = 1;
 
-  for (int cell = 0; cell < 8; cell++)
+  for (int dir = 0; dir < DIRECTIONS; dir++)
   {
-    int action = move_direction[row][col][cell];
+    int action = move_direction[row][col][dir];
     if (!action)
     {
       continue; // not valid in any direction
     }
 
-    int row_dir = playable_directions[cell][0];
-    int col_dir = playable_directions[cell][1];
+    int row_dir = playable_directions[dir][0];
+    int col_dir = playable_directions[dir][1];
 
     int row_temp = row + row_dir;
     int col_temp = col + col_dir;
@@ -154,16 +153,28 @@ void prompt_move()
 {
   int row, col;
 
-  while (1)
+  if (game_style && current_player == 1)
   {
-    std::cout << "Enter the row and column (e.g. 2 0)\n";
-    std::cin >> row >> col;
-    if (in_player_moves(row, col))
+    std::array<int, 2> best_move = evaluate_moves(current_player, board, player_moves, move_direction);
+    execute_move(best_move[0], best_move[1]);
+    previous_move = {best_move[0],
+                     best_move[1]};
+  }
+  else
+  {
+    while (1)
     {
-      execute_move(row, col);
-      break;
+      std::cout << "Previous move: [" << previous_move[0] << ',' << previous_move[1] << ']' << '\n';
+      std::cout << "Enter the row and column (e.g. 2 0)\n";
+      std::cin >> row >> col;
+      if (in_player_moves(row, col))
+      {
+        execute_move(row, col);
+        previous_move = {row, col};
+        break;
+      }
+      std::cout << "You can't make that move. Please try again!\n\n";
     }
-    std::cout << "You can't make that move. Please try again!\n\n";
   }
 }
 
@@ -240,9 +251,19 @@ void display_winner()
     std::cout << "\nGame was drawn!\n";
 }
 
+bool prompt_game_style()
+{
+  bool style_ai;
+  std::cout << "Type 0 to play locally with a friend.\n";
+  std::cout << "Type 1 to play against a machine.\n";
+  std::cin >> style_ai;
+  return style_ai;
+}
+
 int main()
 {
   setup();
+  game_style = prompt_game_style();
   int game_end = 0;
   int consecutive_skips = 0;
 
