@@ -29,3 +29,4 @@ The current iteration of the AI is just a naive implementation which takes the m
 - [ ] Handle exceptions
 - [ ] Enhance UI with ncurses
 - [ ] Parallelize with OMP
+- [ ] [Implement bitboards](https://olinjohnson.github.io/posts/optimizing-chess-othello-and-connect-4-with-bitboards/)
